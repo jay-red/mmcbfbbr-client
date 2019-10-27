@@ -1,1 +1,110 @@
-/* game.css */
+@font-face {
+	font-family: "BitFont";
+	src: url( "../assets/BitFont.woff" );
+}
+
+body, html {
+	margin: 0px;
+	padding: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+span {
+	font-family: "BitFont";
+}
+
+.hidden {
+	display: none !important ;
+}
+
+.col {
+	display: block;
+	width: calc(100% / 3);
+	float: left;
+}
+
+.player-name {
+	display: block;
+	font-size: 30px;
+	text-align: center;
+}
+
+#countdown-text {
+	font-size: 30px;
+	text-align: center;
+	width: 100%;
+	display: block;
+	padding-bottom: 20px;
+}
+
+#countdown {
+	font-size: 220px;
+	color: white;
+	text-shadow:
+		-5px -5px 0 #000000,
+		5px -5px 0 #000000,
+		-5px 5px 0 #000000,
+		5px 5px 0 #000000;
+	text-align: center;
+	width: 100%;
+	display: block;
+	padding-top: 20px;
+}
+
+#play {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+#play-button {
+	font-size: 40px;
+	background-color: black;
+	color: white;
+	padding: 20px;
+	border-radius: 5px;
+}
+
+#play-button:hover {
+	background-color: #505050;
+	cursor: pointer;
+}
+
+#cols {
+	display: block;
+	width: 100%;
+	min-height: 210px;
+}
+
+#title {
+	font-size: 120px;
+	color: white;
+	text-shadow:
+		-5px -5px 0 #000000,
+		5px -5px 0 #000000,
+		-5px 5px 0 #000000,
+		5px 5px 0 #000000;
+	text-align: center;
+	width: 100%;
+	display: block;
+	padding-top: 20px;
+}
+
+#subtitle {
+	font-size: 20px;
+	text-align: center;
+	width: 100%;
+	display: block;
+	padding-bottom: 20px;
+}
+
+#game {
+	height: 100%;
+	width: 100%;
+	background-image: url( "../assets/environment.png" );
+	image-rendering: -moz-crisp-edges;
+	image-rendering: -webkit-crisp-edges;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}

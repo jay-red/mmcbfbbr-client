@@ -165,6 +165,7 @@ function sendOrientation() {
 }
 
 function handleMessage(ms) {
+	ms = ms.data;
 	switch(ms.charCodeAt(0)) {
 		case 0:
 			if (ms.charCodeAt(1) != 0) {

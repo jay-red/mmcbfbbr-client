@@ -1,7 +1,31 @@
-<DOCTYPE html>
+<!DOCTYPE html>
 <html>
 	<head>
+		<link rel="stylesheet" type="text/css" href="css/game.css" />
 	</head>
 	<body>
+		<div id="startscreen">
+			<span id="title">MMCBFBBR</span>
+			<span id="subtitle">Multiplayer Mobile Controlled Boss Fight Betrayal Battle Royale</span>
+			<div id="cols">
+				<div id="list-one" class="col">					
+				</div>
+				<div id="list-two" class="col">					
+				</div>
+				<div id="list-three" class="col">
+				</div>
+			</div>
+			<div id="play">
+				<span id="play-button">Play!</span>
+			</div>
+			<span id="countdown-text" class="hidden">Game is starting in...</span>
+			<span id="countdown" class="hidden"></span>
+		</div>
+		<div id="specscreen">
+		</div>
+		<div id="gamescreen" class="hidden">
+			<canvas id="game"></canvas>
+		</div>
+		<script src="js/game.js"></script>
 	</body>
 </html>
