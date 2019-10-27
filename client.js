@@ -33,17 +33,17 @@ window.onload = function() {
 //   console.log(event.alpha + ' : ' + event.beta + ' : ' + event.gamma);
 // });
 
-function initWs() {
+function init() {
 	ws = new Webocket("wss://mmcbfbbr.herokuapp.com");
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
+	window.addEventListener('deviceorientation', getDeviceOrientation);
 }
 
 function openHandler() {
 	var playButton = document.getElementById("playButton");
 	playButton.addEventListener('touchstart', sendName);
-	window.addEventListener('deviceorientation', getDeviceOrientation);
 }
 
 function closeHandler() {
@@ -56,6 +56,7 @@ function getDeviceOrientation(event) {
 	player.beta = event.beta;
 	player.gamma = event.gamma;
 	printDeviceOrientation();
+	sendOrientation();
 }
 
 function printDeviceOrientation() {
@@ -134,10 +135,24 @@ function waitGameStart() {
 	waitScreen.setAttribute("style", "display: initial");
 }
 
+function gameStart() {
+	window.addEventListener('deviceorientation', getDeviceOrientation);
+	var waitScreen = document.getElementById("waitScreen");
+	waitScreen.setAttribute("style", "display: none");
+	var gameScreen = document.getElementById("gameScreen");
+	gameScreen.setAttribute("style", "display: initial");
+	var gameButton = document.getElementById("modeButton");
+	gameButton.addEventListener('touchStart', function() {
+		player.spotlight = !player.spotlight;
+	});
+}
+
 function sendOrientation() {
-	var modeByte = player.spotlight ? "04" : "03";
-	var orientation = "0x" + modeByte + player.direction.toString(16) 
-		+ player.magnitude.toString(8);
+	var mode = player.spotlight ? 0x04 : 0x03;
+	var orientation = String.fromCharCode(mode) + 
+		String.fromCharCode((player.direction & 0xFF00) >> 8) + 
+		String.fromCharCode(player.direction & 0x00FF) + 
+		String.fromCharCode(player.magnitude);
 	console.log("sendOrientation: " + orientation);
 	ws.send(orientation);
 }
@@ -153,7 +168,10 @@ function handleMessage(ms) {
 			else {
 				document.getElementById("waitMsg").innerHTML = "Cannot join game";
 			}
-		case 1:
+			break;
+		case 2:
+			gameStart();
+			break;
 		default:
 	}
 }
