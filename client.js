@@ -34,7 +34,7 @@ window.addEventListener('load', init);
 // });
 
 function init() {
-	ws = new WebSocket("wss://mmcbfbbr.herokuapp.com");
+	ws = new WebSocket("ws://localhost:1004");
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
@@ -179,6 +179,7 @@ function handleMessage(ms) {
 			}
 			break;
 		case 2:
+			console.log( "game start" );
 			gameStart();
 			break;
 		default:
