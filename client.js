@@ -78,7 +78,7 @@ function getDeviceOrientation(event) {
 	player.alpha = event.alpha;
 	player.beta = event.beta;
 	player.gamma = event.gamma;
-	printDeviceOrientation();
+	// printDeviceOrientation();
 	sendOrientation(5);
 }
 
@@ -263,13 +263,17 @@ function processDeath() {
 	window.removeEventListener('devicemotion', getDeviceAcceleration);
 }
 
-function displayResult(winnerID) {
+function displayResult(winnerID, winnerName) {
 	var gameScreen = document.getElementById("gameScreen");
 	gameScreen.style.display = "none";
 	var endScreen = document.getElementById("endScreen");
+	endScreen.style.backgroundColor = colorScheme[winnerID];
 	endScreen.style.display = "initial";
 	if (winnerID == playerID) {
 		endScreen.innerHTML = "CONGRATULATIONS!!";
+	}
+	else {
+		endScreen.innerHTML = winnerName + " is the winner.";
 	}
 }
 
