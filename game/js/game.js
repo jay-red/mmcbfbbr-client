@@ -16,7 +16,7 @@ function mmcbfbbr() {
 	function Game() {
 		this.canvas = null;
 		this.ctx = null;
-		this.players;
+		this.players = {};
 		this.countdown = 5;
 		this.interval = null;
 	}
@@ -80,9 +80,13 @@ function mmcbfbbr() {
 
 	function ws_msg( msg ) {
 		code = msg.data.charCodeAt( 0 );
-		data = msg.data.substring( 1 );
-		console.log( code )
-		console.log( data )
+		data = msg.data.substring( 1 ); 
+		switch( code ) {
+			case OP_JOIN:
+				game.players[ data.charCodeAt( 0 ) ] = new Player( data.charCodeAt( 0 ), data.substring( 1 ) );
+				console.log( game );
+				break;
+		}
 	}
 
 	ws.onopen = ws_open;

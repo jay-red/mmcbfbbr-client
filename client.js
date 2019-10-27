@@ -124,7 +124,7 @@ function sendName() {
 	var name = document.getElementById("nameInput").value;
 	if (!name) return;
 	var playButton = document.getElementById("playButton");
-	var message = String.fromCharCode(0x00) + name + String.fromCharCode(0x00);
+	var message = String.fromCharCode(0x00) + name;
 	console.log("sendName: " + message);
 	ws.send(message);
 	playButton.removeEventListener('click', sendName);
