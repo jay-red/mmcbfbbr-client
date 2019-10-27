@@ -321,6 +321,10 @@ function handleMessage(ms) {
 			var newHealth = (ms.charCodeAt(1) << 8) + ms.charCodeAt(2);
 			updateHealth(newHealth);
 			break;
+		case 10:
+			var winnerID = ms.charCodeAt(1);
+			var winnerName = ms.substring(2);
+			displayResult(winnerID, winnerName);
 		default:
 	}
 }
