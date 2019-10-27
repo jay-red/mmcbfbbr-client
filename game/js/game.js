@@ -16,11 +16,14 @@ var OP_JOIN = 0x00;
 	WAFFLE_HITBOX = [[13,33],[55,33],[55,89],[13,89]],
 	BEACH_HITBOX = [[6,6],[34,6],[34,34],[6,34]],
 	ATTACK_THRESHOLD = 500,
-	PLAYER_BASEHEALTH = 20,
-	WAFFLE_BASEHEALTH = 20,
+	PLAYER_BASEHEALTH = 100,
+	WAFFLE_BASEHEALTH = 200,
 	WAFFLE_SCALING = 1,
-	WAFFLE_BASEDMG = 5,
-	PLAYER_BASEDMG = 200;
+	WAFFLE_BASEDMG = 20,
+	PLAYER_BASEDMG = 20,
+	AIRDRAG = 0.001,
+	ACCEL_MULT = 50,
+	ACCEL_SLOW = .000001;
 
 function mmcbfbbr() {
 	var img_name = "",
@@ -206,8 +209,8 @@ function mmcbfbbr() {
 				}
 			}
 			if( player.spotlight ) {
-				player.sdy += ( Math.sin( player.sdirection ) * player.smagnitude * 50 ) * .000001 * elapsed;
-				player.sdx += ( Math.cos( player.sdirection ) * player.smagnitude * 50 ) * .000001 * elapsed;
+				player.sdy += ( Math.sin( player.sdirection ) * player.smagnitude * ACCEL_MULT ) * .000001 * elapsed;
+				player.sdx += ( Math.cos( player.sdirection ) * player.smagnitude * ACCEL_MULT ) * .000001 * elapsed;
 				if( player.sdy < -MAX_VELOCITY ) {
 					player.sdy = -MAX_VELOCITY;
 				} else if( player.sdy > MAX_VELOCITY ) {
@@ -217,6 +220,18 @@ function mmcbfbbr() {
 					player.sdx = -MAX_VELOCITY;
 				} else if( player.sdx > MAX_VELOCITY ) {
 					player.sdx = MAX_VELOCITY;
+				}
+				if( Math.abs( player.sdx ) < 0.1 ) player.sdx = 0; 
+				if( player.sdx > 0 ) {
+					player.sdx -= AIRDRAG * elapsed;
+				} else {
+					player.sdx += AIRDRAG * elapsed;
+				}
+				if( Math.abs( player.sdy ) < 0.1 ) player.sdy = 0; 
+				if( player.sdy > 0 ) {
+					player.sdy -= AIRDRAG * elapsed;
+				} else {
+					player.sdy += AIRDRAG * elapsed;
 				}
 				player.sy += player.sdy;
 				player.sx += player.sdx;
@@ -245,8 +260,8 @@ function mmcbfbbr() {
 					}
 				}
 			} else {
-				player.dy += ( Math.sin( player.direction ) * player.magnitude * 50 ) * .000001 * elapsed;
-				player.dx += ( Math.cos( player.direction ) * player.magnitude * 50 ) * .000001 * elapsed;
+				player.dy += ( Math.sin( player.direction ) * player.magnitude * 50 ) * ACCEL_SLOW * elapsed;
+				player.dx += ( Math.cos( player.direction ) * player.magnitude * 50 ) * ACCEL_SLOW * elapsed;
 				if( player.dy < -MAX_VELOCITY ) {
 					player.dy = -MAX_VELOCITY;
 				} else if( player.dy > MAX_VELOCITY ) {
@@ -256,6 +271,18 @@ function mmcbfbbr() {
 					player.dx = -MAX_VELOCITY;
 				} else if( player.dx > MAX_VELOCITY ) {
 					player.dx = MAX_VELOCITY;
+				}
+				if( Math.abs( player.dx ) < 0.1 ) player.dx = 0; 
+				if( player.dx > 0 ) {
+					player.dx -= AIRDRAG * elapsed;
+				} else {
+					player.dx += AIRDRAG * elapsed;
+				}
+				if( Math.abs( player.dy ) < 0.1 ) player.dy = 0; 
+				if( player.dy > 0 ) {
+					player.dy -= AIRDRAG * elapsed;
+				} else {
+					player.dy += AIRDRAG * elapsed;
 				}
 				player.y += player.dy;
 				player.x += player.dx;
@@ -298,7 +325,7 @@ function mmcbfbbr() {
 			player = players[ i ];
 			if( player.alive ) {
 				liveCount++;
-				lastAlive = player;
+				
 				if( player.attackers.length > 0 ) {
 					if( ts - player.lastAttacked > ATTACK_THRESHOLD ) {
 						if( player.lastAttacked == -1 ) player.lastAttacked = ts;
@@ -314,9 +341,11 @@ function mmcbfbbr() {
 					}
 				}
 			}
-			if( player.health <= 0 ) {
+			if( player.alive && player.health <= 0 ) {
 				player.alive = false;
 				liveCount--;
+			} else {
+				if( player.alive ) lastAlive = player;
 			}
 		}
 		if( liveCount <= 1 ) {
@@ -495,11 +524,6 @@ function mmcbfbbr() {
 				break;
 		}
 	}
-
-	game.boss = 1;
-	game.players[ 2 ] = new Player( 2, "waffle" );
-	game.players[ 2 ].x = 30;
-	game.players[ 2 ].y = 30;
 
 	ws.onopen = ws_open;
 	ws.onclose = ws_close;

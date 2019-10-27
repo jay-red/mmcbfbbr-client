@@ -324,6 +324,7 @@ function handleMessage(ms) {
 			if (ms.charCodeAt(1) == player.ID) {
 				player.isWaffle = true;
 				waitScreen.style.backgroundImage = 'url("./game/assets/rainbow.jpg")';
+				gameScreen.style.backgroundImage = 'url("./game/assets/rainbow.jpg")';
 				roleMsg.innerHTML = "You are WAFFLE! Eliminate ALL other players";
 			}
 			else {
