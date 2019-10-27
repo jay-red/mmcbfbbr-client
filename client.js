@@ -149,7 +149,7 @@ function gameStart() {
 	var gameScreen = document.getElementById("gameScreen");
 	gameScreen.style.display = "initial";
 	var gameButton = document.getElementById("modeButton");
-	gameButton.addEventListener('touchStart', function() {
+	gameButton.addEventListener('touchstart', function() {
 		player.spotlight = !player.spotlight;
 	});
 }

@@ -51,6 +51,7 @@ function mmcbfbbr() {
 		knight_imgs[ i - 1 ].addEventListener( "load", knight_error );
 		knight_imgs[ i - 1 ].src = "assets/" + img_name;
 		img_name = "spotlight_";
+		if( i < 10 ) img_name += "0";
 		img_name += i.toString();
 		img_name += ".png";
 		spotlight_imgs.push( new Image() );
@@ -173,6 +174,30 @@ function mmcbfbbr() {
 				}
 				player.sy += player.sdy;
 				player.sx += player.sdx;
+				if( player.sy < 0 ) {
+					player.sy = 0;
+					if( player.sdy < 0 ) {
+						player.sdy = 0;
+					}
+				}
+				if( player.sy + height > game.canvas.height ) {
+					player.sy = game.canvas.height - height;
+					if( player.sdy > 0 ) {
+						player.sdy = 0;
+					}
+				}
+				if( player.sx < 0 ) {
+					player.sx = 0;
+					if( player.sdx < 0 ) {
+						player.sdx = 0;
+					}
+				}
+				if( player.sx + width > game.canvas.width ) {
+					player.sx = game.canvas.width - width;
+					if( player.sdx > 0 ) {
+						player.sdx = 0;
+					}
+				}
 			} else {
 				player.dy += ( Math.sin( player.direction ) * player.magnitude * 50 ) * .000001 * elapsed;
 				player.dx += ( Math.cos( player.direction ) * player.magnitude * 50 ) * .000001 * elapsed;
@@ -186,32 +211,32 @@ function mmcbfbbr() {
 				} else if( player.dx > MAX_VELOCITY ) {
 					player.dx = MAX_VELOCITY;
 				}
-			}
-			console.log( "dx: " + player.dx.toString() + " dy: " + player.dy.toString() );
-			player.y += player.dy;
-			player.x += player.dx;
-			if( player.y < 0 ) {
-				player.y = 0;
-				if( player.dy < 0 ) {
-					player.dy = 0;
+				console.log( "dx: " + player.dx.toString() + " dy: " + player.dy.toString() );
+				player.y += player.dy;
+				player.x += player.dx;
+				if( player.y < 0 ) {
+					player.y = 0;
+					if( player.dy < 0 ) {
+						player.dy = 0;
+					}
 				}
-			}
-			if( player.y + height > game.canvas.height ) {
-				player.y = game.canvas.height - height;
-				if( player.dy > 0 ) {
-					player.dy = 0;
+				if( player.y + height > game.canvas.height ) {
+					player.y = game.canvas.height - height;
+					if( player.dy > 0 ) {
+						player.dy = 0;
+					}
 				}
-			}
-			if( player.x < 0 ) {
-				player.x = 0;
-				if( player.dx < 0 ) {
-					player.dx = 0;
+				if( player.x < 0 ) {
+					player.x = 0;
+					if( player.dx < 0 ) {
+						player.dx = 0;
+					}
 				}
-			}
-			if( player.x + width > game.canvas.width ) {
-				player.x = game.canvas.width - width;
-				if( player.dx > 0 ) {
-					player.dx = 0;
+				if( player.x + width > game.canvas.width ) {
+					player.x = game.canvas.width - width;
+					if( player.dx > 0 ) {
+						player.dx = 0;
+					}
 				}
 			}
 		}
@@ -225,10 +250,13 @@ function mmcbfbbr() {
 			player = players[ i ];
 			if( game.boss != player.uid ) {
 				game.ctx.drawImage( knight_imgs[ player.uid - 1 ], 0, 0, 14, 20, player.x | 0, player.y | 0, 14, 20 );
+				if( player.spotlight ) {
+					game.ctx.drawImage( spotlight_imgs[ player.uid - 1 ], 0, 0, 20, 20, player.sx | 0, player.sy | 0, 20, 20 );
+				}
 			}
 		}
-		waffle = game.players[ game.boss ];
-		game.ctx.drawImage( waffle_img, 0, 0, 70, 94, waffle.x | 0, waffle.y | 0, 70, 94 );
+		//waffle = game.players[ game.boss ];
+		//game.ctx.drawImage( waffle_img, 0, 0, 70, 94, waffle.x | 0, waffle.y | 0, 70, 94 );
 	}
 
 	function game_loop( ts ) {
@@ -269,6 +297,7 @@ function mmcbfbbr() {
 				player.direction = data.charCodeAt( 1 ) << 8;
 				player.direction += data.charCodeAt( 2 );
 				player.direction = player.direction / 180 * Math.PI;
+				player.spotlight = false;
 				console.log( "magnitude: " + player.magnitude.toString() + " direction: " + player.direction.toString() )
 				break;
 			case OP_SMOVE:
@@ -277,10 +306,11 @@ function mmcbfbbr() {
 				player.sdirection = data.charCodeAt( 1 ) << 8;
 				player.sdirection += data.charCodeAt( 2 );
 				player.sdirection = player.direction / 180 * Math.PI;
-				console.log( "magnitude: " + player.magnitude.toString() + " direction: " + player.direction.toString() )
+				player.spotlight = true;
+				console.log( "smagnitude: " + player.magnitude.toString() + " sdirection: " + player.direction.toString() )
 				break;
 			case OP_WAIT:
-				game.boss = data.charCodeAt( 0 );
+				//.game.boss = data.charCodeAt( 0 );
 				break;
 		}
 	}
