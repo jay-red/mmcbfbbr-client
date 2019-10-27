@@ -99,6 +99,9 @@ function mmcbfbbr() {
 		this.alive = true;
 		this.attack = player_attack;
 		this.damage = {};
+		this.attackers = [];
+		this.lastAttackers = [];
+		this.lastAttacked = -1;
 	}
 
 	function Game() {
@@ -176,6 +179,7 @@ function mmcbfbbr() {
 			width = 14,
 			height = 20,
 			player;
+		game.healthUpdate = false;
 		for( var i = 0; i < players.length; i++ ) {
 			player = players[ i ];
 			if( player.uid == game.boss ) {
@@ -265,11 +269,15 @@ function mmcbfbbr() {
 		}
 	}
 
+	function update_health() {
+
+	}
+
 	function send_health() {
 		var data = {},
 			players = Object.values( game.players );
 
-		for( var i = 0; players.length; i++ ) {
+		for( var i = 0; i < players.length; i++ ) {
 			data[ i ] = players[ i ].health;
 		}
 
@@ -346,6 +354,7 @@ function mmcbfbbr() {
 				update( ts - game.lastTS );
 				collide();
 				if( game.healthUpdate ) {
+					update_health();
 					send_health();
 				}
 				render_players();
