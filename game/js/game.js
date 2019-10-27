@@ -7,8 +7,12 @@ var OP_JOIN = 0x00;
 	OP_SPEC = 0x06;
 	OP_STOP = 0x07,
 	OP_WAIT = 0x08,
-	MAX_VELOCITY_PLAYER = 2
-	MAX_VELOCITY_BOSS = 1;
+	MAX_VELOCITY_PLAYER = 2,
+	MAX_VELOCITY_BOSS = 1,
+	PLAYER_HITBOX = [[0,0],[14,0],[14,20],[0,20]],
+	SPOTLIGHT_HITBOX = [[3,3],[17,3],[17,17],[3,17]],
+	WAFFLE_HITBOX = [[13,33],[55,33],[55,89],[13,89]],
+	BEACH_HITBOX = [[6,6],[34,6],[34,34],[6,34]];
 
 function mmcbfbbr() {
 	var img_name = "",
@@ -76,6 +80,8 @@ function mmcbfbbr() {
 		this.sdx = 0
 		this.sdy = 0
 		this.spotlight = false;
+		this.health = 100
+		this.alive = true;
 	}
 
 	function Game() {
@@ -170,7 +176,7 @@ function mmcbfbbr() {
 				if( player.sdx < -MAX_VELOCITY ) {
 					player.sdx = -MAX_VELOCITY;
 				} else if( player.sdx > MAX_VELOCITY ) {
-					player.sdy = MAX_VELOCITY;
+					player.sdx = MAX_VELOCITY;
 				}
 				player.sy += player.sdy;
 				player.sx += player.sdx;
@@ -242,21 +248,57 @@ function mmcbfbbr() {
 		}
 	}
 
+	function collide() {
+		var waffle = game.players[ game.boss ],
+			players = Object.values( game.players ),
+			x,
+			y,
+			sx,
+			sy,
+			player;
+		if( waffle.alive ) {
+			for( var i = 0; i < players.length; i++ ) {
+				player = players[ i ];
+				if( player.alive && player.spotlight ) {
+					for( var j = 0; j < 4; j++ ) {
+						sx = players[ i ].sx + SPOTLIGHT_HITBOX[ j ][ 0 ];
+						sy = players[ i ].sy + SPOTLIGHT_HITBOX[ j ][ 1 ];
+						if( sx >= waffle.x + WAFFLE_HITBOX[ 0 ][ 0 ] && sx <= waffle.x + WAFFLE_HITBOX[ 2 ][ 0 ] 
+						&& sy >= waffle.y + WAFFLE_HITBOX[ 0 ][ 1 ] && sy <= waffle.y + WAFFLE_HITBOX[ 2 ][ 1 ] ) {
+							console.log( "DEATH TO WAFFLE" );
+						}
+						x = players[ i ].x + PLAYER_HITBOX[ j ][ 0 ];
+						y = players[ i ].y + PLAYER_HITBOX[ j ][ 1 ];
+						if( x >= waffle.sx + BEACH_HITBOX[ 0 ][ 0 ] && x <= waffle.sx + BEACH_HITBOX[ 2 ][ 0 ] 
+						&& y >= waffle.sy + BEACH_HITBOX[ 0 ][ 1 ] && y <= waffle.sy + BEACH_HITBOX[ 2 ][ 1 ] ) {
+							console.log( "DEATH TO US" );
+						}
+					}
+				}
+			}
+		} else {
+
+		}
+		
+	}
+
 	function render_players() {
 		var players = Object.values( game.players ),
 			player,
 			waffle;
 		for( var i = 0; i < players.length; i++ ) {
 			player = players[ i ];
-			if( game.boss != player.uid ) {
+			if( player.alive && game.boss != player.uid ) {
 				game.ctx.drawImage( knight_imgs[ player.uid - 1 ], 0, 0, 14, 20, player.x | 0, player.y | 0, 14, 20 );
 				if( player.spotlight ) {
 					game.ctx.drawImage( spotlight_imgs[ player.uid - 1 ], 0, 0, 20, 20, player.sx | 0, player.sy | 0, 20, 20 );
 				}
 			}
 		}
-		//waffle = game.players[ game.boss ];
-		//game.ctx.drawImage( waffle_img, 0, 0, 70, 94, waffle.x | 0, waffle.y | 0, 70, 94 );
+		waffle = game.players[ game.boss ];
+		if( waffle.alive ) {
+			game.ctx.drawImage( waffle_img, 0, 0, 70, 94, waffle.x | 0, waffle.y | 0, 70, 94 );
+		}
 	}
 
 	function game_loop( ts ) {
@@ -265,6 +307,7 @@ function mmcbfbbr() {
 			if( game.started && knights_ready ) {
 				game.ctx.clearRect( 0, 0, game.canvas.width, game.canvas.height );
 				update( ts - game.lastTS );
+				collide();
 				render_players();
 			}
 			game.lastTS = ts;
@@ -298,22 +341,29 @@ function mmcbfbbr() {
 				player.direction += data.charCodeAt( 2 );
 				player.direction = player.direction / 180 * Math.PI;
 				player.spotlight = false;
-				console.log( "magnitude: " + player.magnitude.toString() + " direction: " + player.direction.toString() )
+				//console.log( "magnitude: " + player.magnitude.toString() + " direction: " + player.direction.toString() )
 				break;
 			case OP_SMOVE:
 				var player = game.players[ data.charCodeAt( 0 ) ];
+				if( !player.spotlight ) {
+					player.sx = player.x - 3;
+					player.sy = player.y;
+				}
 				player.smagnitude = data.charCodeAt( 3 );
 				player.sdirection = data.charCodeAt( 1 ) << 8;
 				player.sdirection += data.charCodeAt( 2 );
-				player.sdirection = player.direction / 180 * Math.PI;
+				player.sdirection = player.sdirection / 180 * Math.PI;
 				player.spotlight = true;
-				console.log( "smagnitude: " + player.magnitude.toString() + " sdirection: " + player.direction.toString() )
+				//console.log( "smagnitude: " + player.magnitude.toString() + " sdirection: " + player.direction.toString() )
 				break;
 			case OP_WAIT:
-				//.game.boss = data.charCodeAt( 0 );
+				//game.boss = data.charCodeAt( 0 );
 				break;
 		}
 	}
+
+	game.boss = 1;
+	game.players[ 2 ] = new Player( 2, "waffle" );
 
 	ws.onopen = ws_open;
 	ws.onclose = ws_close;
