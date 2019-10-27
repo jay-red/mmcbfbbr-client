@@ -23,6 +23,8 @@ body, html {
 
 #waitScreen {
 	display: none;
+	background-color: black;
+	color: white;
 }
 
 #nameInput {
@@ -56,7 +58,7 @@ body, html {
 	font-size: 15vh;
 }
 
-#playButton a::active {
+#playButton a:active {
 	border-color: yellow;
 	width: 58%;
 }

@@ -78,6 +78,8 @@ function getDeviceOrientation(event) {
 	player.alpha = event.alpha;
 	player.beta = event.beta;
 	player.gamma = event.gamma;
+	calcPlayerDirection();
+	calcPlayerMagnitude(255);
 	// printDeviceOrientation();
 	sendOrientation(5);
 }
