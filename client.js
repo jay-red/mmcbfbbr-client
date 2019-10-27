@@ -246,9 +246,21 @@ function updateHealth(health) {
 	if (player.health <= 0) {
 		player.health = 0;
 		player.isDead = true;
+		processDeath();
 	}
 	var healthBar = document.getElementById("health");
-	healthBar.style.width = player.health / playerMaxHealth;
+	healthBar.style.width = Math.ceil(player.health / playerMaxHealth * 100) + "%";
+}
+
+function processDeath() {
+	var screen = document.getElementById("gameScreen");
+	screen.style.backgroundColor = "black";
+	var healthBar = document.getElementById("healthBar");
+	healthBar.style.borderColor = "red";
+	var health = document.getElementById("health");
+	health.style.display = "none";
+	window.removeEventListener('deviceorientation', getDeviceOrientation);
+	window.removeEventListener('devicemotion', getDeviceAcceleration);
 }
 
 function handleMessage(ms) {
