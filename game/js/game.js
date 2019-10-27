@@ -16,8 +16,8 @@ var OP_JOIN = 0x00;
 	WAFFLE_HITBOX = [[13,33],[55,33],[55,89],[13,89]],
 	BEACH_HITBOX = [[6,6],[34,6],[34,34],[6,34]],
 	ATTACK_THRESHOLD = 500,
-	PLAYER_BASEHEALTH = 100,
-	WAFFLE_BASEHEALTH = 200,
+	PLAYER_BASEHEALTH = 20,
+	WAFFLE_BASEHEALTH = 20,
 	WAFFLE_SCALING = 1,
 	WAFFLE_BASEDMG = 5,
 	PLAYER_BASEDMG = 200;
@@ -122,7 +122,7 @@ function mmcbfbbr() {
 		this.healthUpdate = false;
 	}
 
-	var ws = new WebSocket( "ws://mmcbfbbr.herokuapp.com" ),
+	var ws = new WebSocket( "wss://mmcbfbbr.herokuapp.com" ),
 		game = new Game(),
 		cols = document.getElementById( "cols" ),
 		lists = [ document.getElementById( "list-one" ), document.getElementById( "list-two" ), document.getElementById( "list-three" ) ],
@@ -180,7 +180,7 @@ function mmcbfbbr() {
 		countdown.setAttribute( "class", "" );
 		countdown.innerHTML = "5";
 		cdtext.setAttribute( "class", "" );
-
+		game.players[ game.boss ].health = WAFFLE_BASEHEALTH + ( WAFFLE_BASEHEALTH * WAFFLE_SCALING * ( Object.values( game.players ).length - 2 ) );
 		game.interval = setInterval( countdown_game, 1000 );
 	}
 
@@ -310,8 +310,8 @@ function mmcbfbbr() {
 								player.health -= PLAYER_BASEDMG;
 							}
 						}
+						player.lastAttacked = ts;
 					}
-					player.lastAttacked = ts;
 				}
 			}
 			if( player.health <= 0 ) {
@@ -328,7 +328,7 @@ function mmcbfbbr() {
 		var data = {},
 			players = Object.values( game.players ),
 			max;
-
+			console.log( players);
 		for( var i = 0; i < players.length; i++ ) {
 			max = PLAYER_BASEHEALTH;
 			data[ players[ i ].uid ] = players[ i ].health;
@@ -487,7 +487,7 @@ function mmcbfbbr() {
 				//console.log( "smagnitude: " + player.magnitude.toString() + " sdirection: " + player.direction.toString() )
 				break;
 			case OP_WAIT:
-				//game.boss = data.charCodeAt( 0 );
+				game.boss = data.charCodeAt( 0 );
 				start_wait();
 				break;
 			case OP_HEALTH:
