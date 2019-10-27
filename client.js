@@ -22,12 +22,12 @@ var orientThreshold = {
 };
 var ws = null;
 
-// window.onload = initWs;
-window.onload = function() {
-	window.addEventListener('deviceorientation', getDeviceOrientation);
-	// ScreenOrientation.lock("landscape-primary");
-	// window.requestAnimationFrame(step);
-}
+window.onload = init;
+// window.onload = function() {
+// 	window.addEventListener('deviceorientation', getDeviceOrientation);
+// 	// ScreenOrientation.lock("landscape-primary");
+// 	// window.requestAnimationFrame(step);
+// }
 
 // window.addEventListener('deviceorientation', function(event) {
 //   console.log(event.alpha + ' : ' + event.beta + ' : ' + event.gamma);
@@ -38,12 +38,14 @@ function init() {
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
-	window.addEventListener('deviceorientation', getDeviceOrientation);
+	// window.addEventListener('deviceorientation', getDeviceOrientation);
 }
 
 function openHandler() {
 	var playButton = document.getElementById("playButton");
 	playButton.addEventListener('touchstart', sendName);
+	playButton.setAttribute("style", "background-color: cyan");
+	playButton.setAttribute("style", "border-color: cyan");
 }
 
 function closeHandler() {

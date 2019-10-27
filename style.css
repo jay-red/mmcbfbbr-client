@@ -44,11 +44,11 @@ body, html {
 	position: relative;
 	width: 60%;
 	height: 20%;
-	background-color: cyan;
+	background-color: grey;
 	border-radius: 20px;
 	border-width: 5px;
 	border-style: solid;
-	border-color: cyan;
+	border-color: grey;
 	margin: auto;
 	text-align: center;
 	color: white;
