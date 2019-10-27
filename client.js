@@ -21,6 +21,7 @@ var player = {
 	lastMag: 0,
 	lastMagSent: -1,
 	lastDirSent: -1,
+	lastModeSent: false,
 	isWaffle: false,
 	health: 100
 };
@@ -215,16 +216,26 @@ function sendOrientation(threshold) {
 		String.fromCharCode((player.direction & 0xFF00) >> 8) + 
 		String.fromCharCode(player.direction & 0x00FF) + 
 		String.fromCharCode(player.magnitude);
+	if( player.lastModeSent != player.spotlight ) {
+		ws.send(orientation);
+		player.lastMagSent = player.magnitude;
+		player.lastDirSent = player.direction;
+		player.lastModeSent = player.spotlight;
+	}
 	if (Math.abs(player.lastMagSent - player.magnitude) > threshold) {
 		if( player.lastMagSent == 0 && player.magnitude == 0 ) return;
 		ws.send(orientation);
 		player.lastMagSent = player.magnitude;
 		player.lastDirSent = player.direction;
+		player.lastModeSent = player.spotlight;
+		return;
 	}
 	if( Math.abs( player.lastDirSent - player.direction ) > threshold ) {
 		ws.send(orientation);
 		player.lastMagSent = player.magnitude;
 		player.lastDirSent = player.direction;
+		player.lastModeSent = player.spotlight;
+		return;
 	}
 }
 

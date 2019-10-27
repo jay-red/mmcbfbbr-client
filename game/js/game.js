@@ -73,6 +73,10 @@ function mmcbfbbr() {
 		spotlight_imgs[ i - 1 ].src = "assets/" + img_name;
 	}
 
+	function player_attack( target ) {
+	
+	}
+
 	function Player( uid, name ) {
 		this.uid = uid;
 		this.name = name;
@@ -86,11 +90,12 @@ function mmcbfbbr() {
 		this.sy = 0;
 		this.sdirection = 0;
 		this.smagnitude = 0;
-		this.sdx = 0
-		this.sdy = 0
+		this.sdx = 0;
+		this.sdy = 0;
 		this.spotlight = false;
-		this.health = 100
+		this.health = 100;
 		this.alive = true;
+		this.attack = player_attack;
 	}
 
 	function Game() {
@@ -275,7 +280,7 @@ function mmcbfbbr() {
 								sy = player.sy + SPOTLIGHT_HITBOX[ j ][ 1 ];
 								if( sx >= waffle.x + WAFFLE_HITBOX[ 0 ][ 0 ] && sx <= waffle.x + WAFFLE_HITBOX[ 2 ][ 0 ] 
 								&& sy >= waffle.y + WAFFLE_HITBOX[ 0 ][ 1 ] && sy <= waffle.y + WAFFLE_HITBOX[ 2 ][ 1 ] ) {
-									console.log( "DEATH TO WAFFLE" );
+									player.attack( waffle );q
 								}
 							}
 							if( waffle.spotlight ) {
@@ -283,7 +288,7 @@ function mmcbfbbr() {
 								y = player.y + PLAYER_HITBOX[ j ][ 1 ];
 								if( x >= waffle.sx + BEACH_HITBOX[ 0 ][ 0 ] && x <= waffle.sx + BEACH_HITBOX[ 2 ][ 0 ] 
 								&& y >= waffle.sy + BEACH_HITBOX[ 0 ][ 1 ] && y <= waffle.sy + BEACH_HITBOX[ 2 ][ 1 ] ) {
-									console.log( "DEATH TO US" );
+									waffle.attack( player );
 								}
 							}
 						}
@@ -345,7 +350,7 @@ function mmcbfbbr() {
 	function ws_msg( msg ) {
 		var code = msg.data.charCodeAt( 0 ),
 			data = msg.data.substring( 1 );
-		console.log( code );
+		//console.log( code );
 		switch( code ) {
 			case OP_JOIN:
 				game.players[ data.charCodeAt( 0 ) ] = new Player( data.charCodeAt( 0 ), data.substring( 1 ) );
@@ -379,7 +384,7 @@ function mmcbfbbr() {
 		}
 	}
 
-	game.boss = 2;
+	game.boss = 1;
 	game.players[ 2 ] = new Player( 2, "waffle" );
 	game.players[ 2 ].x = 30;
 	game.players[ 2 ].y = 30;
