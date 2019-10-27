@@ -30,6 +30,10 @@ span {
 	text-align: center;
 }
 
+#gamescreen {
+	height: 100%;
+}
+
 #countdown-text {
 	font-size: 30px;
 	text-align: center;
