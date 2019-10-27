@@ -20,7 +20,7 @@ var player = {
 	zAcc: 0,
 	lastMag: 0,
 	isWaffle: false,
-	health: 100;
+	health: 100
 };
 var orientThreshold = {
 	betaMax: 30,
