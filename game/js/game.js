@@ -5,12 +5,77 @@ var OP_JOIN = 0x00;
 	OP_SMOVE = 0x04;
 	OP_PROG = 0x05;
 	OP_SPEC = 0x06;
-	OP_STOP = 0x07;
+	OP_STOP = 0x07,
+	OP_WAIT = 0x08,
+	MAX_VELOCITY_PLAYER = 2
+	MAX_VELOCITY_BOSS = 1;
 
 function mmcbfbbr() {
+	var img_name = "",
+		knight_imgs = [],
+		spotlight_imgs = [],
+		waffle_img = new Image();
+		loaded = 0,
+		errored = 0,
+		knights_ready = false,
+		waffle_ready = false;
+
+	function knight_load() {
+		loaded += 1;
+		if( loaded + errored == 40 ) {
+			knights_ready = knights_ready || true;
+		}
+	}
+
+	function knight_error() {
+		errored += 1;
+		if( loaded + errored == 40 ) {
+			knights_ready = knights_ready || true;
+		}
+	}
+
+	function waffle_load() {
+		waffle_ready = true;
+	}
+
+	waffle_img.addEventListener( "load", waffle_load );
+	waffle_img.src = "assets/waffle.png";
+
+	for( var i = 1; i <= 20; i++ ) {
+		img_name = "knight_";
+		if( i < 10 ) img_name += "0";
+		img_name += i.toString();
+		img_name += ".png";
+		knight_imgs.push( new Image() );
+		knight_imgs[ i - 1 ].addEventListener( "load", knight_load );
+		knight_imgs[ i - 1 ].addEventListener( "load", knight_error );
+		knight_imgs[ i - 1 ].src = "assets/" + img_name;
+		img_name = "spotlight_";
+		if( i < 10 ) img_name += "0";
+		img_name += i.toString();
+		img_name += ".png";
+		spotlight_imgs.push( new Image() );
+		spotlight_imgs[ i - 1 ].addEventListener( "load", knight_load );
+		spotlight_imgs[ i - 1 ].addEventListener( "load", knight_error );
+		spotlight_imgs[ i - 1 ].src = "assets/" + img_name;
+	}
+
 	function Player( uid, name ) {
 		this.uid = uid;
 		this.name = name;
+		this.x = 0;
+		this.y = 0;
+		this.direction = 0;
+		this.magnitude = 0;
+		this.dx = 0;
+		this.dy = 0;
+		this.sx = 0;
+		this.sy = 0;
+		this.sdirection = 0;
+		this.smagnitude = 0;
+		this.sdx = 0
+		this.sdy = 0
+		this.spotlight = false;
 	}
 
 	function Game() {
@@ -19,6 +84,8 @@ function mmcbfbbr() {
 		this.players = {};
 		this.countdown = 5;
 		this.interval = null;
+		this.started = false;
+		this.boss = -1;
 	}
 
 	var ws = new WebSocket( "wss://mmcbfbbr.herokuapp.com" ),
@@ -40,6 +107,22 @@ function mmcbfbbr() {
 		game.startTS = null;
 	}
 
+	function refresh_players() {
+		var players = Object.values( game.players ),
+			span,
+			col;
+		lists[ 0 ].innerHTML = "";
+		lists[ 1 ].innerHTML = "";
+		lists[ 2 ].innerHTML = "";
+		for( var i = 0; i < players.length; i++ ) {
+			span = document.createElement( "span" );
+			span.setAttribute( "class", "player-name" );
+			span.innerHTML = players[ i ].name;
+			col = lists[ i % 3 ];
+			col.appendChild( span );
+		}
+	}
+
 	function countdown_game() {
 		game.countdown -= 1;
 		if( game.countdown >= 0 ) {
@@ -48,6 +131,8 @@ function mmcbfbbr() {
 			clearInterval( game.interval );
 			startscreen.setAttribute( "class", "hidden" );
 			gamescreen.setAttribute( "class", "" );
+			ws.send( String.fromCharCode( OP_START ) );
+			game.started = true;
 		}
 	}
 
@@ -58,19 +143,138 @@ function mmcbfbbr() {
 		countdown.innerHTML = "5";
 		cdtext.setAttribute( "class", "" );
 		game.interval = setInterval( countdown_game, 1000 );
+		ws.send( String.fromCharCode( OP_WAIT ) );
+	}
+
+	function update( elapsed ) {
+		var players = Object.values( game.players ),
+			MAX_VELOCITY = MAX_VELOCITY_PLAYER,
+			width = 14,
+			height = 20,
+			player;
+		for( var i = 0; i < players.length; i++ ) {
+			player = players[ i ];
+			if( player.uid == game.boss ) {
+				MAX_VELOCITY = MAX_VELOCITY_BOSS;
+				width = 70;
+				height = 94;
+			}
+			if( player.spotlight ) {
+				player.sdy += ( Math.sin( player.sdirection ) * player.smagnitude * 50 ) * .000001 * elapsed;
+				player.sdx += ( Math.cos( player.sdirection ) * player.smagnitude * 50 ) * .000001 * elapsed;
+				if( player.sdy < -MAX_VELOCITY ) {
+					player.sdy = -MAX_VELOCITY;
+				} else if( player.sdy > MAX_VELOCITY ) {
+					player.sdy = MAX_VELOCITY;
+				}
+				if( player.sdx < -MAX_VELOCITY ) {
+					player.sdx = -MAX_VELOCITY;
+				} else if( player.sdx > MAX_VELOCITY ) {
+					player.sdy = MAX_VELOCITY;
+				}
+				player.sy += player.sdy;
+				player.sx += player.sdx;
+				if( player.sy < 0 ) {
+					player.sy = 0;
+					if( player.sdy < 0 ) {
+						player.sdy = 0;
+					}
+				}
+				if( player.sy + height > game.canvas.height ) {
+					player.sy = game.canvas.height - height;
+					if( player.sdy > 0 ) {
+						player.sdy = 0;
+					}
+				}
+				if( player.sx < 0 ) {
+					player.sx = 0;
+					if( player.sdx < 0 ) {
+						player.sdx = 0;
+					}
+				}
+				if( player.sx + width > game.canvas.width ) {
+					player.sx = game.canvas.width - width;
+					if( player.sdx > 0 ) {
+						player.sdx = 0;
+					}
+				}
+			} else {
+				player.dy += ( Math.sin( player.direction ) * player.magnitude * 50 ) * .000001 * elapsed;
+				player.dx += ( Math.cos( player.direction ) * player.magnitude * 50 ) * .000001 * elapsed;
+				if( player.dy < -MAX_VELOCITY ) {
+					player.dy = -MAX_VELOCITY;
+				} else if( player.dy > MAX_VELOCITY ) {
+					player.dy = MAX_VELOCITY;
+				}
+				if( player.dx < -MAX_VELOCITY ) {
+					player.dx = -MAX_VELOCITY;
+				} else if( player.dx > MAX_VELOCITY ) {
+					player.dx = MAX_VELOCITY;
+				}
+				console.log( "dx: " + player.dx.toString() + " dy: " + player.dy.toString() );
+				player.y += player.dy;
+				player.x += player.dx;
+				if( player.y < 0 ) {
+					player.y = 0;
+					if( player.dy < 0 ) {
+						player.dy = 0;
+					}
+				}
+				if( player.y + height > game.canvas.height ) {
+					player.y = game.canvas.height - height;
+					if( player.dy > 0 ) {
+						player.dy = 0;
+					}
+				}
+				if( player.x < 0 ) {
+					player.x = 0;
+					if( player.dx < 0 ) {
+						player.dx = 0;
+					}
+				}
+				if( player.x + width > game.canvas.width ) {
+					player.x = game.canvas.width - width;
+					if( player.dx > 0 ) {
+						player.dx = 0;
+					}
+				}
+			}
+		}
+	}
+
+	function render_players() {
+		var players = Object.values( game.players ),
+			player,
+			waffle;
+		for( var i = 0; i < players.length; i++ ) {
+			player = players[ i ];
+			if( game.boss != player.uid ) {
+				game.ctx.drawImage( knight_imgs[ player.uid - 1 ], 0, 0, 14, 20, player.x | 0, player.y | 0, 14, 20 );
+				if( player.spotlight ) {
+					game.ctx.drawImage( spotlight_imgs[ player.uid - 1 ], 0, 0, 20, 20, player.sx | 0, player.sy | 0, 20, 20 );
+				}
+			}
+		}
+		//waffle = game.players[ game.boss ];
+		//game.ctx.drawImage( waffle_img, 0, 0, 70, 94, waffle.x | 0, waffle.y | 0, 70, 94 );
 	}
 
 	function game_loop( ts ) {
 		if( game.canvas != null ) {
 			if( !game.lastTS ) game.lastTS = ts;
+			if( game.started && knights_ready ) {
+				game.ctx.clearRect( 0, 0, game.canvas.width, game.canvas.height );
+				update( ts - game.lastTS );
+				render_players();
+			}
 			game.lastTS = ts;
 		}
 		window.requestAnimationFrame( game_loop );
 	}
 
 	function ws_open() {
-		ws.send( String.fromCharCode( 0x07 ) );
-		ws.send( String.fromCharCode( 0x01 ) );
+		ws.send( String.fromCharCode( OP_STOP ) );
+		ws.send( String.fromCharCode( OP_GAME ) );
 		init_game();
 	}
 
@@ -79,12 +283,34 @@ function mmcbfbbr() {
 	}
 
 	function ws_msg( msg ) {
-		code = msg.data.charCodeAt( 0 );
-		data = msg.data.substring( 1 ); 
+		var code = msg.data.charCodeAt( 0 ),
+			data = msg.data.substring( 1 );
+		console.log( code );
 		switch( code ) {
 			case OP_JOIN:
 				game.players[ data.charCodeAt( 0 ) ] = new Player( data.charCodeAt( 0 ), data.substring( 1 ) );
-				console.log( game );
+				refresh_players();
+				break;
+			case OP_PMOVE:
+				var player = game.players[ data.charCodeAt( 0 ) ];
+				player.magnitude = data.charCodeAt( 3 );
+				player.direction = data.charCodeAt( 1 ) << 8;
+				player.direction += data.charCodeAt( 2 );
+				player.direction = player.direction / 180 * Math.PI;
+				player.spotlight = false;
+				console.log( "magnitude: " + player.magnitude.toString() + " direction: " + player.direction.toString() )
+				break;
+			case OP_SMOVE:
+				var player = game.players[ data.charCodeAt( 0 ) ];
+				player.smagnitude = data.charCodeAt( 3 );
+				player.sdirection = data.charCodeAt( 1 ) << 8;
+				player.sdirection += data.charCodeAt( 2 );
+				player.sdirection = player.direction / 180 * Math.PI;
+				player.spotlight = true;
+				console.log( "smagnitude: " + player.magnitude.toString() + " sdirection: " + player.direction.toString() )
+				break;
+			case OP_WAIT:
+				//.game.boss = data.charCodeAt( 0 );
 				break;
 		}
 	}
