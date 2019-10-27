@@ -263,6 +263,16 @@ function processDeath() {
 	window.removeEventListener('devicemotion', getDeviceAcceleration);
 }
 
+function displayResult(winnerID) {
+	var gameScreen = document.getElementById("gameScreen");
+	gameScreen.style.display = "none";
+	var endScreen = document.getElementById("endScreen");
+	endScreen.style.display = "initial";
+	if (winnerID == playerID) {
+		endScreen.innerHTML = "CONGRATULATIONS!!";
+	}
+}
+
 function handleMessage(ms) {
 	ms = ms.data;
 	switch(ms.charCodeAt(0)) {
@@ -276,6 +286,7 @@ function handleMessage(ms) {
 				console.log("color: " + player.color);
 				var waitScreen = document.getElementById("waitScreen");
 				waitScreen.style.backgroundColor = player.color;
+				gameScreen.style.backgroundColor = player.color;
 			}
 			else {
 				document.getElementById("waitMsg").innerHTML = "Cannot join game";

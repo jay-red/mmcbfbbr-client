@@ -71,7 +71,7 @@ body, html {
 }
 
 #gameScreen {
-	display: initial;
+	display: none;
 }
 
 #modeButton {
@@ -101,5 +101,4 @@ body, html {
 	height: 10vh;
 	background-color: red;
 	border-radius: 70px;
-	margin: auto;
 }
