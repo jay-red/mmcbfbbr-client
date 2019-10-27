@@ -114,3 +114,19 @@ body, html {
 	background-color: black;
 }
 
+#waffle {
+	display: none;
+	width: 50%;
+	margin: auto;
+}
+
+h1 {
+	color: white;
+	margin: auto;
+	position: relative;
+	width: 60%;
+	height: 10vh;
+	font-size: 10vh;
+	top: 40vh;
+}
+

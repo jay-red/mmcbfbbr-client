@@ -35,6 +35,7 @@ var orientThreshold = {
 };
 var playerMaxHealth = 100;
 var waffleMaxHealth = 100;
+var waffleID = 0;
 var ws = null;
 var colorScheme = ["#ebdb00", "#740090", "#f15f0b", 
 	"#90c8ee", "#ca0032", "#c2c481", "#7f7d83", "#3fb631", "#df73b4", 
@@ -274,8 +275,13 @@ function displayResult(winnerID, winnerName) {
 	var gameScreen = document.getElementById("gameScreen");
 	gameScreen.style.display = "none";
 	var endScreen = document.getElementById("endScreen");
-	endScreen.style.backgroundColor = colorScheme[winnerID];
+	endScreen.style.backgroundColor = colorScheme[colorScheme.length - winnerID];
 	endScreen.style.display = "initial";
+	if (winnerID == waffleID) {
+		endScreen.style.backgroundImage = 'url("./game/assets/rainbow.jpg")';
+		var waffle = document.getElementById("waffle");
+		waffle.style.disply = "initial";
+	}
 	if (winnerID == playerID) {
 		endScreen.innerHTML = "CONGRATULATIONS!!";
 	}
@@ -310,11 +316,18 @@ function handleMessage(ms) {
 		case 8:
 			// countdown starts
 			var waitScreen = document.getElementById("waitScreen");
-				waitScreen.style.backgroundColor = player.color;
-				gameScreen.style.backgroundColor = player.color;
+			waitScreen.style.backgroundColor = player.color;
+			gameScreen.style.backgroundColor = player.color;
+			roleMsg = document.getElementById("role");
 			waffleMaxHealth = (ms.charCodeAt(2) << 8) + ms.charCodeAt(3);
+			waffleID = ms.charCodeAt(1);
 			if (ms.charCodeAt(1) == player.ID) {
 				player.isWaffle = true;
+				waitScreen.style.backgroundImage = 'url("./game/assets/rainbow.jpg")';
+				roleMsg.innerHTML = "You are WAFFLE! Eliminate ALL other players";
+			}
+			else {
+				roleMsg.innerHTML = "Fight WAFFLE with your friends!";
 			}
 			break;
 		case 9:
