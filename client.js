@@ -23,7 +23,8 @@ var player = {
 	lastDirSent: -1,
 	lastModeSent: false,
 	isWaffle: false,
-	health: 100
+	health: 100,
+	isDead: false
 };
 var orientThreshold = {
 	betaMax: 30,
@@ -32,6 +33,7 @@ var orientThreshold = {
 	gammaMin: 8,
 	magDiff: 10
 };
+var playerMaxHealth = 100;
 var ws = null;
 var colorScheme = ["#ebdb00", "#740090", "#f15f0b", 
 	"#90c8ee", "#ca0032", "#c2c481", "#7f7d83", "#3fb631", "#df73b4", 
@@ -239,6 +241,16 @@ function sendOrientation(threshold) {
 	}
 }
 
+function updateHealth(health) {
+	player.health = health;
+	if (player.health <= 0) {
+		player.health = 0;
+		player.isDead = true;
+	}
+	var healthBar = document.getElementById("health");
+	healthBar.style.width = player.health / playerMaxHealth;
+}
+
 function handleMessage(ms) {
 	ms = ms.data;
 	switch(ms.charCodeAt(0)) {
@@ -269,6 +281,10 @@ function handleMessage(ms) {
 			if (ms.charCodeAt(1) == player.ID) {
 				player.isWaffle = true;
 			}
+			break;
+		case 9:
+			var newHealth = (ms.charCodeAt(1) << 8) + ms.charCodeAt(2);
+			updateHealth(newHealth);
 			break;
 		default:
 	}
