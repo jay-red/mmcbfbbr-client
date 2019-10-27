@@ -22,7 +22,7 @@ var orientThreshold = {
 };
 var ws = null;
 
-window.onload = init;
+window.addEventListener('load', init);
 // window.onload = function() {
 // 	window.addEventListener('deviceorientation', getDeviceOrientation);
 // 	// ScreenOrientation.lock("landscape-primary");
@@ -34,7 +34,7 @@ window.onload = init;
 // });
 
 function init() {
-	ws = new Webocket("wss://mmcbfbbr.herokuapp.com");
+	ws = new WebSocket("wss://mmcbfbbr.herokuapp.com");
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
@@ -44,8 +44,8 @@ function init() {
 function openHandler() {
 	var playButton = document.getElementById("playButton");
 	playButton.addEventListener('touchstart', sendName);
-	playButton.setAttribute("style", "background-color: cyan");
-	playButton.setAttribute("style", "border-color: cyan");
+	playButton.style.backgroundColor = "cyan";
+	playButton.style.borderColor = "cyan";
 }
 
 function closeHandler() {
@@ -121,28 +121,33 @@ function step(timestamp) {
 
 function sendName() {
 	event.preventDefault();
+	var name = document.getElementById("nameInput").value;
+	if (!name) return;
 	var playButton = document.getElementById("playButton");
-	playButton.detachListender
-	var name = document.getElementById("nameField").value;
 	var message = String.fromCharCode(0x00) + name + String.fromCharCode(0x00);
 	console.log("sendName: " + message);
 	ws.send(message);
+	playButton.removeEventListener('click', sendName);
 	waitGameStart();
 }
 
 function waitGameStart() {
+	console.log("waiting");
 	var startScreen = document.getElementById("startScreen");
-	startScreen.setAttribute("style", "display: none");
+	startScreen.style.display = "none";
 	var waitScreen = document.getElementById("waitScreen");
-	waitScreen.setAttribute("style", "display: initial");
+	waitScreen.style.display = "initial";
+	if (player.color != "") {
+		waitScreen.style.backgroundColor = player.color;
+	}
 }
 
 function gameStart() {
 	window.addEventListener('deviceorientation', getDeviceOrientation);
 	var waitScreen = document.getElementById("waitScreen");
-	waitScreen.setAttribute("style", "display: none");
+	waitScreen.style.display = "none";
 	var gameScreen = document.getElementById("gameScreen");
-	gameScreen.setAttribute("style", "display: initial");
+	gameScreen.style.display = "initial";
 	var gameButton = document.getElementById("modeButton");
 	gameButton.addEventListener('touchStart', function() {
 		player.spotlight = !player.spotlight;
@@ -166,6 +171,7 @@ function handleMessage(ms) {
 				player.ID = ms.charCodeAt(1);
 				player.color = "0x" + ms.charCodeAt(2).toString(16) + 
 				ms.charCodeAt(3).toString(16) + ms.charCodeAt(4).toString(16);
+				console.log("color: " + player.color);
 			}
 			else {
 				document.getElementById("waitMsg").innerHTML = "Cannot join game";
