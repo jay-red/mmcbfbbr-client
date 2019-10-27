@@ -21,7 +21,7 @@ function mmcbfbbr() {
 		this.interval = null;
 	}
 
-	var ws = new WebSocket( "ws://mmcbfbbr.herokuapp.com" ),
+	var ws = new WebSocket( "wss://mmcbfbbr.herokuapp.com" ),
 		game = new Game(),
 		cols = document.getElementById( "cols" ),
 		lists = [ document.getElementById( "list-one" ), document.getElementById( "list-two" ), document.getElementById( "list-three" ) ],

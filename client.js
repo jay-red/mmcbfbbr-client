@@ -34,7 +34,7 @@ window.addEventListener('load', init);
 // });
 
 function init() {
-	ws = new WebSocket("ws://localhost:1004");
+	ws = new WebSocket("wss://mmcbfbbr.herokuapp.com");
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
