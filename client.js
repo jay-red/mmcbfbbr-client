@@ -34,6 +34,7 @@ var orientThreshold = {
 	magDiff: 10
 };
 var playerMaxHealth = 100;
+var waffleMaxHealth = 100;
 var ws = null;
 var colorScheme = ["#ebdb00", "#740090", "#f15f0b", 
 	"#90c8ee", "#ca0032", "#c2c481", "#7f7d83", "#3fb631", "#df73b4", 
@@ -251,6 +252,10 @@ function updateHealth(health) {
 		processDeath();
 	}
 	var healthBar = document.getElementById("health");
+	if (player.isWaffle) {
+		healthBar.style.width = Math.ceil(player.health / waffleMaxHealth * 100) + "%";
+		return;
+	}
 	healthBar.style.width = Math.ceil(player.health / playerMaxHealth * 100) + "%";
 }
 
@@ -307,6 +312,7 @@ function handleMessage(ms) {
 			var waitScreen = document.getElementById("waitScreen");
 				waitScreen.style.backgroundColor = player.color;
 				gameScreen.style.backgroundColor = player.color;
+			waffleMaxHealth = (ms.charCodeAt(2) << 8) + ms.charCodeAt(3);
 			if (ms.charCodeAt(1) == player.ID) {
 				player.isWaffle = true;
 			}
