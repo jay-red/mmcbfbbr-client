@@ -14,13 +14,25 @@ var player = {
 	direction: 0,
 	// magnitude: 0- 255
 	magnitude: 0,
-	spotlight: false
+	spotlight: false,
+	xAcc: 0,
+	yAcc: 0,
+	zAcc: 0,
+	lastMag: 0,
+	isWaffle: false
 };
 var orientThreshold = {
 	betaMax: 30,
-	gammaMax: 45
+	betaMin: 13,
+	gammaMax: 30,
+	gammaMin: 8,
+	magDiff: 10
 };
 var ws = null;
+var colorScheme = ["#ebdb00", "#740090", "#f15f0b", 
+	"#90c8ee", "#ca0032", "#c2c481", "#7f7d83", "#3fb631", "#df73b4", 
+	"#4566af", "#eb8062", "#5500a2", "#ddb100", "#9c0090", "#e4f93d", 
+	"#85000b", "#88c013", "#7f360d", "#e8001e", "#243a0d"];
 
 window.addEventListener('load', init);
 // window.onload = function() {
@@ -38,7 +50,8 @@ function init() {
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
-	// window.addEventListener('deviceorientation', getDeviceOrientation);
+	window.addEventListener('devicemotion', getDeviceAcceleration);
+	window.addEventListener('deviceorientation', getDeviceOrientation);
 }
 
 function openHandler() {
@@ -58,7 +71,15 @@ function getDeviceOrientation(event) {
 	player.beta = event.beta;
 	player.gamma = event.gamma;
 	printDeviceOrientation();
-	sendOrientation();
+	sendOrientation(5);
+}
+
+function getDeviceAcceleration(event) {
+	var acc = event.acceleration;
+	player.xAcc = acc.x;
+	player.yAcc = acc.y;
+	player.zAcc = acc.z;
+	// printDeviceOrientation();
 }
 
 function printDeviceOrientation() {
@@ -70,7 +91,10 @@ function printDeviceOrientation() {
 			else if (i == 1) display[i].innerHTML = player.beta;
 			else if (i == 2) display[i].innerHTML = player.gamma;
 			else if (i == 3) display[i].innerHTML = player.direction;
-			else display[i].innerHTML = player.magnitude;
+			else if (i == 4) display[i].innerHTML = player.magnitude;
+			else if (i == 5) display[i].innerHTML = player.xAcc;
+			else if (i == 6) display[i].innerHTML = player.yAcc;
+			else display[i].innerHTML = player.zAcc;
 		}
 }
 
@@ -95,15 +119,40 @@ function calcPlayerDirection() {
 function calcPlayerMagnitude(range) {
 	var beta = Math.abs(player.beta);
 	var gamma = Math.abs(player.gamma);
+	var mag = 0;
 	if (beta > orientThreshold.betaMax) {
 		beta = orientThreshold.betaMax;
 	}
+	else if (beta < orientThreshold.betaMin) {
+		beta = 0;
+	}
+
 	if (gamma > orientThreshold.gammaMax) {
 		gamma = orientThreshold.gammaMax;
 	}
-	beta = beta / orientThreshold.betaMax * Math.sqrt(Math.pow(range, 2) / 2);
-	gamma = gamma / orientThreshold.gammaMax * Math.sqrt(Math.pow(range, 2) / 2);
-	var mag = Math.sqrt(Math.pow(beta, 2) + Math.pow(gamma, 2));
+	else if (gamma < orientThreshold.gammaMin) {
+		gamma = 0;
+	}
+
+	beta = beta / orientThreshold.betaMax * 255;
+	gamma = gamma / orientThreshold.gammaMax * 255;
+
+	if (beta != 0 && gamma != 0) {
+		var tangent = Math.tan(player.direction);
+		// beta = beta / orientThreshold.betaMax * Math.sqrt(Math.pow(range, 2) / 2);
+		// gamma = gamma / orientThreshold.gammaMax * Math.sqrt(Math.pow(range, 2) / 2);
+		var x = Math.sqrt(1 / ((1 / Math.pow(beta, 2)) + (Math.pow(tangent, 2) 
+			/ Math.pow(gamma, 2))));
+		var y = x * tangent;
+		mag = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+	}
+	else if (beta != 0) {
+		mag = beta;
+	}
+	else if (gamma != 0) {
+		mag = gamma;
+	}
+	player.lastMag = player.magnitude;
 	player.magnitude = mag;
 	return mag;
 }
@@ -143,25 +192,27 @@ function waitGameStart() {
 }
 
 function gameStart() {
-	window.addEventListener('deviceorientation', getDeviceOrientation);
+	// window.addEventListener('deviceorientation', getDeviceOrientation);
+	// window.addEventListener('devicemotion', getDeviceAcceleration)
 	var waitScreen = document.getElementById("waitScreen");
 	waitScreen.style.display = "none";
 	var gameScreen = document.getElementById("gameScreen");
 	gameScreen.style.display = "initial";
 	var gameButton = document.getElementById("modeButton");
-	gameButton.addEventListener('touchStart', function() {
+	gameButton.addEventListener('touchstart', function() {
 		player.spotlight = !player.spotlight;
 	});
 }
 
-function sendOrientation() {
+function sendOrientation(threshold) {
 	var mode = player.spotlight ? 0x04 : 0x03;
 	var orientation = String.fromCharCode(mode) + 
 		String.fromCharCode((player.direction & 0xFF00) >> 8) + 
 		String.fromCharCode(player.direction & 0x00FF) + 
 		String.fromCharCode(player.magnitude);
 	console.log("sendOrientation: " + orientation);
-	ws.send(orientation);
+	if (Math.abs(player.lastMag - player.magnitude) > threshold)
+		ws.send(orientation);
 }
 
 function handleMessage(ms) {
@@ -170,17 +221,28 @@ function handleMessage(ms) {
 		case 0:
 			if (ms.charCodeAt(1) != 0) {
 				player.ID = ms.charCodeAt(1);
-				player.color = "0x" + ms.charCodeAt(2).toString(16) + 
-				ms.charCodeAt(3).toString(16) + ms.charCodeAt(4).toString(16);
+				console.log("ID: " + player.ID);
+				// player.color = "0x" + ms.charCodeAt(2).toString(16) + 
+				// ms.charCodeAt(3).toString(16) + ms.charCodeAt(4).toString(16);
+				player.color = colorScheme[colorScheme.length - player.ID];
 				console.log("color: " + player.color);
+				var waitScreen = document.getElementById("waitScreen");
+				waitScreen.style.backgroundColor = player.color;
 			}
 			else {
 				document.getElementById("waitMsg").innerHTML = "Cannot join game";
 			}
 			break;
 		case 2:
+			// game starts?
 			console.log( "game start" );
 			gameStart();
+			break;
+		case 8:
+			// countdown starts
+			if (ms.charCodeAt(1) == player.ID) {
+				player.isWaffle = true;
+			}
 			break;
 		default:
 	}
