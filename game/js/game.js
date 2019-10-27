@@ -8,12 +8,19 @@ var OP_JOIN = 0x00;
 	OP_STOP = 0x07,
 	OP_WAIT = 0x08,
 	OP_HEALTH = 0x09,
+	OP_FIN = 0x0A,
 	MAX_VELOCITY_PLAYER = 2,
 	MAX_VELOCITY_BOSS = 1,
 	PLAYER_HITBOX = [[0,0],[14,0],[14,20],[0,20]],
 	SPOTLIGHT_HITBOX = [[3,3],[17,3],[17,17],[3,17]],
 	WAFFLE_HITBOX = [[13,33],[55,33],[55,89],[13,89]],
-	BEACH_HITBOX = [[6,6],[34,6],[34,34],[6,34]];
+	BEACH_HITBOX = [[6,6],[34,6],[34,34],[6,34]],
+	ATTACK_THRESHOLD = 500,
+	PLAYER_BASEHEALTH = 100,
+	WAFFLE_BASEHEALTH = 200,
+	WAFFLE_SCALING = 1,
+	WAFFLE_BASEDMG = 5,
+	PLAYER_BASEDMG = 200;
 
 function mmcbfbbr() {
 	var img_name = "",
@@ -76,7 +83,7 @@ function mmcbfbbr() {
 
 	function player_attack( target ) {
 		game.healthUpdate = true;
-		target.health -= 1;
+		target.attackers.push( this );
 	}
 
 	function Player( uid, name ) {
@@ -115,7 +122,7 @@ function mmcbfbbr() {
 		this.healthUpdate = false;
 	}
 
-	var ws = new WebSocket( "wss://mmcbfbbr.herokuapp.com" ),
+	var ws = new WebSocket( "ws://mmcbfbbr.herokuapp.com" ),
 		game = new Game(),
 		cols = document.getElementById( "cols" ),
 		lists = [ document.getElementById( "list-one" ), document.getElementById( "list-two" ), document.getElementById( "list-three" ) ],
@@ -164,13 +171,17 @@ function mmcbfbbr() {
 	}
 
 	function start_game() {
+		ws.send( String.fromCharCode( OP_WAIT ) );
+	}
+
+	function start_wait() {
 		cols.setAttribute( "class", "hidden" );
 		play.setAttribute( "class", "hidden" );
 		countdown.setAttribute( "class", "" );
 		countdown.innerHTML = "5";
 		cdtext.setAttribute( "class", "" );
+
 		game.interval = setInterval( countdown_game, 1000 );
-		ws.send( String.fromCharCode( OP_WAIT ) );
 	}
 
 	function update( elapsed ) {
@@ -181,11 +192,18 @@ function mmcbfbbr() {
 			player;
 		game.healthUpdate = false;
 		for( var i = 0; i < players.length; i++ ) {
+			width = 14;
+			height = 20;
 			player = players[ i ];
+			player.attackers = [];
 			if( player.uid == game.boss ) {
 				MAX_VELOCITY = MAX_VELOCITY_BOSS;
 				width = 70;
 				height = 94;
+				if( player.spotlight ) {
+					width = 40;
+					height = 40;
+				}
 			}
 			if( player.spotlight ) {
 				player.sdy += ( Math.sin( player.sdirection ) * player.smagnitude * 50 ) * .000001 * elapsed;
@@ -269,16 +287,51 @@ function mmcbfbbr() {
 		}
 	}
 
-	function update_health() {
+	function update_health( ts ) {
+		var players = Object.values( game.players ),
+			player,
+			attacker,
+			liveCount = 0,
+			lastAlive;
 
+		for( var i = 0; i < players.length; i++ ) {
+			player = players[ i ];
+			if( player.alive ) {
+				liveCount++;
+				lastAlive = player;
+				if( player.attackers.length > 0 ) {
+					if( ts - player.lastAttacked > ATTACK_THRESHOLD ) {
+						if( player.lastAttacked == -1 ) player.lastAttacked = ts;
+						for( var j = 0; j < player.attackers.length; j++ ) {
+							attacker = player.attackers[ j ];
+							if( attacker.uid == game.boss ) {
+								player.health -= WAFFLE_BASEDMG;
+							} else {
+								player.health -= PLAYER_BASEDMG;
+							}
+						}
+					}
+					player.lastAttacked = ts;
+				}
+			}
+			if( player.health <= 0 ) {
+				player.alive = false;
+				liveCount--;
+			}
+		}
+		if( liveCount <= 1 ) {
+			ws.send( String.fromCharCode( OP_FIN ) + String.fromCharCode( lastAlive.uid ) + lastAlive.name );
+		}
 	}
 
 	function send_health() {
 		var data = {},
-			players = Object.values( game.players );
+			players = Object.values( game.players ),
+			max;
 
 		for( var i = 0; i < players.length; i++ ) {
-			data[ i ] = players[ i ].health;
+			max = PLAYER_BASEHEALTH;
+			data[ players[ i ].uid ] = players[ i ].health;
 		}
 
 		ws.send( String.fromCharCode( OP_HEALTH ) + JSON.stringify( data ) );
@@ -291,7 +344,8 @@ function mmcbfbbr() {
 			y,
 			sx,
 			sy,
-			player;
+			player,
+			player2;
 		if( waffle.alive ) {
 			for( var i = 0; i < players.length; i++ ) {
 				player = players[ i ];
@@ -319,7 +373,34 @@ function mmcbfbbr() {
 				}
 			}
 		} else {
-
+			for( var i = 0; i < players.length; i++ ) {
+				player2 = players[ i ];
+				for( var k = 0; k < players.length; k++ ) {
+					player = players[ k ];
+					if( player.alive ) {
+						for( var j = 0; j < 4; j++ ) {
+							if( k != i ) {
+								if( player.spotlight ) {
+									sx = player.sx + SPOTLIGHT_HITBOX[ j ][ 0 ];
+									sy = player.sy + SPOTLIGHT_HITBOX[ j ][ 1 ];
+									if( sx >= player2.x + PLAYER_HITBOX[ 0 ][ 0 ] && sx <= player2.x + PLAYER_HITBOX[ 2 ][ 0 ] 
+									&& sy >= player2.y + PLAYER_HITBOX[ 0 ][ 1 ] && sy <= player2.y + PLAYER_HITBOX[ 2 ][ 1 ] ) {
+										player.attack( player2 );
+									}
+								}
+								if( player2.spotlight ) {
+									x = player.x + PLAYER_HITBOX[ j ][ 0 ];
+									y = player.y + PLAYER_HITBOX[ j ][ 1 ];
+									if( x >= player2.sx + SPOTLIGHT_HITBOX[ 0 ][ 0 ] && x <= player2.sx + SPOTLIGHT_HITBOX[ 2 ][ 0 ] 
+									&& y >= player2.sy + SPOTLIGHT_HITBOX[ 0 ][ 1 ] && y <= player2.sy + SPOTLIGHT_HITBOX[ 2 ][ 1 ] ) {
+										player2.attack( player );
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 		
 	}
@@ -354,7 +435,7 @@ function mmcbfbbr() {
 				update( ts - game.lastTS );
 				collide();
 				if( game.healthUpdate ) {
-					update_health();
+					update_health( ts );
 					send_health();
 				}
 				render_players();
@@ -407,6 +488,7 @@ function mmcbfbbr() {
 				break;
 			case OP_WAIT:
 				//game.boss = data.charCodeAt( 0 );
+				start_wait();
 				break;
 			case OP_HEALTH:
 				console.log( data );
