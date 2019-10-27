@@ -7,6 +7,7 @@ var OP_JOIN = 0x00;
 	OP_SPEC = 0x06;
 	OP_STOP = 0x07,
 	OP_WAIT = 0x08,
+	OP_HEALTH = 0x09,
 	MAX_VELOCITY_PLAYER = 2,
 	MAX_VELOCITY_BOSS = 1,
 	PLAYER_HITBOX = [[0,0],[14,0],[14,20],[0,20]],
@@ -74,7 +75,8 @@ function mmcbfbbr() {
 	}
 
 	function player_attack( target ) {
-	
+		game.healthUpdate = true;
+		target.health -= 1;
 	}
 
 	function Player( uid, name ) {
@@ -96,6 +98,7 @@ function mmcbfbbr() {
 		this.health = 100;
 		this.alive = true;
 		this.attack = player_attack;
+		this.damage = {};
 	}
 
 	function Game() {
@@ -106,6 +109,7 @@ function mmcbfbbr() {
 		this.interval = null;
 		this.started = false;
 		this.boss = -1;
+		this.healthUpdate = false;
 	}
 
 	var ws = new WebSocket( "wss://mmcbfbbr.herokuapp.com" ),
@@ -261,6 +265,17 @@ function mmcbfbbr() {
 		}
 	}
 
+	function send_health() {
+		var data = {},
+			players = Object.values( game.players );
+
+		for( var i = 0; players.length; i++ ) {
+			data[ i ] = players[ i ].health;
+		}
+
+		ws.send( String.fromCharCode( OP_HEALTH ) + JSON.stringify( data ) );
+	}
+
 	function collide() {
 		var waffle = game.players[ game.boss ],
 			players = Object.values( game.players ),
@@ -280,7 +295,7 @@ function mmcbfbbr() {
 								sy = player.sy + SPOTLIGHT_HITBOX[ j ][ 1 ];
 								if( sx >= waffle.x + WAFFLE_HITBOX[ 0 ][ 0 ] && sx <= waffle.x + WAFFLE_HITBOX[ 2 ][ 0 ] 
 								&& sy >= waffle.y + WAFFLE_HITBOX[ 0 ][ 1 ] && sy <= waffle.y + WAFFLE_HITBOX[ 2 ][ 1 ] ) {
-									player.attack( waffle );q
+									player.attack( waffle );
 								}
 							}
 							if( waffle.spotlight ) {
@@ -330,6 +345,9 @@ function mmcbfbbr() {
 				game.ctx.clearRect( 0, 0, game.canvas.width, game.canvas.height );
 				update( ts - game.lastTS );
 				collide();
+				if( game.healthUpdate ) {
+					send_health();
+				}
 				render_players();
 			}
 			game.lastTS = ts;
@@ -380,6 +398,9 @@ function mmcbfbbr() {
 				break;
 			case OP_WAIT:
 				//game.boss = data.charCodeAt( 0 );
+				break;
+			case OP_HEALTH:
+				console.log( data );
 				break;
 		}
 	}
