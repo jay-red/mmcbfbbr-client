@@ -290,9 +290,6 @@ function handleMessage(ms) {
 				// ms.charCodeAt(3).toString(16) + ms.charCodeAt(4).toString(16);
 				player.color = colorScheme[colorScheme.length - player.ID];
 				console.log("color: " + player.color);
-				var waitScreen = document.getElementById("waitScreen");
-				waitScreen.style.backgroundColor = player.color;
-				gameScreen.style.backgroundColor = player.color;
 			}
 			else {
 				document.getElementById("waitMsg").innerHTML = "Cannot join game";
@@ -307,6 +304,9 @@ function handleMessage(ms) {
 			break;
 		case 8:
 			// countdown starts
+			var waitScreen = document.getElementById("waitScreen");
+				waitScreen.style.backgroundColor = player.color;
+				gameScreen.style.backgroundColor = player.color;
 			if (ms.charCodeAt(1) == player.ID) {
 				player.isWaffle = true;
 			}
