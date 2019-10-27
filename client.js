@@ -19,6 +19,8 @@ var player = {
 	yAcc: 0,
 	zAcc: 0,
 	lastMag: 0,
+	lastMagSent: -1,
+	lastDirSent: -1,
 	isWaffle: false,
 	health: 100
 };
@@ -51,8 +53,10 @@ function init() {
 	ws.onopen = openHandler;
 	ws.onclose = closeHandler;
 	ws.onmessage = handleMessage;
-	window.addEventListener('devicemotion', getDeviceAcceleration);
-	window.addEventListener('deviceorientation', getDeviceOrientation);
+	var waitScreen = document.getElementById("waitScreen");
+	waitScreen.style.display = "none";
+	var gameScreen = document.getElementById("gameScreen");
+	gameScreen.style.display = "none";
 }
 
 function openHandler() {
@@ -211,9 +215,17 @@ function sendOrientation(threshold) {
 		String.fromCharCode((player.direction & 0xFF00) >> 8) + 
 		String.fromCharCode(player.direction & 0x00FF) + 
 		String.fromCharCode(player.magnitude);
-	console.log("sendOrientation: " + orientation);
-	if (Math.abs(player.lastMag - player.magnitude) > threshold)
+	if (Math.abs(player.lastMagSent - player.magnitude) > threshold) {
+		if( player.lastMagSent == 0 && player.magnitude == 0 ) return;
 		ws.send(orientation);
+		player.lastMagSent = player.magnitude;
+		player.lastDirSent = player.direction;
+	}
+	if( Math.abs( player.lastDirSent - player.direction ) > threshold ) {
+		ws.send(orientation);
+		player.lastMagSent = player.magnitude;
+		player.lastDirSent = player.direction;
+	}
 }
 
 function handleMessage(ms) {
@@ -236,6 +248,8 @@ function handleMessage(ms) {
 			break;
 		case 2:
 			// game starts?
+			window.addEventListener('devicemotion', getDeviceAcceleration);
+			window.addEventListener('deviceorientation', getDeviceOrientation);
 			console.log( "game start" );
 			gameStart();
 			break;

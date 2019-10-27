@@ -18,11 +18,13 @@ function mmcbfbbr() {
 	var img_name = "",
 		knight_imgs = [],
 		spotlight_imgs = [],
-		waffle_img = new Image();
+		waffle_img = new Image(),
+		beach_img = new Image();
 		loaded = 0,
 		errored = 0,
 		knights_ready = false,
-		waffle_ready = false;
+		waffle_ready = false,
+		beach_ready = false;
 
 	function knight_load() {
 		loaded += 1;
@@ -42,8 +44,15 @@ function mmcbfbbr() {
 		waffle_ready = true;
 	}
 
+	function beach_load() {
+		beach_ready = true;
+	}
+
 	waffle_img.addEventListener( "load", waffle_load );
 	waffle_img.src = "assets/waffle.png";
+
+	beach_img.addEventListener( "load", beach_load );
+	beach_img.src = "assets/SBBOD.png";
 
 	for( var i = 1; i <= 20; i++ ) {
 		img_name = "knight_";
@@ -217,7 +226,6 @@ function mmcbfbbr() {
 				} else if( player.dx > MAX_VELOCITY ) {
 					player.dx = MAX_VELOCITY;
 				}
-				console.log( "dx: " + player.dx.toString() + " dy: " + player.dy.toString() );
 				player.y += player.dy;
 				player.x += player.dx;
 				if( player.y < 0 ) {
@@ -259,19 +267,25 @@ function mmcbfbbr() {
 		if( waffle.alive ) {
 			for( var i = 0; i < players.length; i++ ) {
 				player = players[ i ];
-				if( player.alive && player.spotlight ) {
+				if( player.alive ) {
 					for( var j = 0; j < 4; j++ ) {
-						sx = players[ i ].sx + SPOTLIGHT_HITBOX[ j ][ 0 ];
-						sy = players[ i ].sy + SPOTLIGHT_HITBOX[ j ][ 1 ];
-						if( sx >= waffle.x + WAFFLE_HITBOX[ 0 ][ 0 ] && sx <= waffle.x + WAFFLE_HITBOX[ 2 ][ 0 ] 
-						&& sy >= waffle.y + WAFFLE_HITBOX[ 0 ][ 1 ] && sy <= waffle.y + WAFFLE_HITBOX[ 2 ][ 1 ] ) {
-							console.log( "DEATH TO WAFFLE" );
-						}
-						x = players[ i ].x + PLAYER_HITBOX[ j ][ 0 ];
-						y = players[ i ].y + PLAYER_HITBOX[ j ][ 1 ];
-						if( x >= waffle.sx + BEACH_HITBOX[ 0 ][ 0 ] && x <= waffle.sx + BEACH_HITBOX[ 2 ][ 0 ] 
-						&& y >= waffle.sy + BEACH_HITBOX[ 0 ][ 1 ] && y <= waffle.sy + BEACH_HITBOX[ 2 ][ 1 ] ) {
-							console.log( "DEATH TO US" );
+						if( player.uid != game.boss ) {
+							if( player.spotlight ) {
+								sx = player.sx + SPOTLIGHT_HITBOX[ j ][ 0 ];
+								sy = player.sy + SPOTLIGHT_HITBOX[ j ][ 1 ];
+								if( sx >= waffle.x + WAFFLE_HITBOX[ 0 ][ 0 ] && sx <= waffle.x + WAFFLE_HITBOX[ 2 ][ 0 ] 
+								&& sy >= waffle.y + WAFFLE_HITBOX[ 0 ][ 1 ] && sy <= waffle.y + WAFFLE_HITBOX[ 2 ][ 1 ] ) {
+									console.log( "DEATH TO WAFFLE" );
+								}
+							}
+							if( waffle.spotlight ) {
+								x = player.x + PLAYER_HITBOX[ j ][ 0 ];
+								y = player.y + PLAYER_HITBOX[ j ][ 1 ];
+								if( x >= waffle.sx + BEACH_HITBOX[ 0 ][ 0 ] && x <= waffle.sx + BEACH_HITBOX[ 2 ][ 0 ] 
+								&& y >= waffle.sy + BEACH_HITBOX[ 0 ][ 1 ] && y <= waffle.sy + BEACH_HITBOX[ 2 ][ 1 ] ) {
+									console.log( "DEATH TO US" );
+								}
+							}
 						}
 					}
 				}
@@ -298,13 +312,16 @@ function mmcbfbbr() {
 		waffle = game.players[ game.boss ];
 		if( waffle.alive ) {
 			game.ctx.drawImage( waffle_img, 0, 0, 70, 94, waffle.x | 0, waffle.y | 0, 70, 94 );
+			if( waffle.spotlight ) {
+				game.ctx.drawImage( beach_img, 0, 0, 40, 40, waffle.sx | 0, waffle.sy | 0, 40, 40 );
+			}
 		}
 	}
 
 	function game_loop( ts ) {
 		if( game.canvas != null ) {
 			if( !game.lastTS ) game.lastTS = ts;
-			if( game.started && knights_ready ) {
+			if( game.started && knights_ready && beach_ready && waffle_ready ) {
 				game.ctx.clearRect( 0, 0, game.canvas.width, game.canvas.height );
 				update( ts - game.lastTS );
 				collide();
@@ -362,8 +379,10 @@ function mmcbfbbr() {
 		}
 	}
 
-	game.boss = 1;
+	game.boss = 2;
 	game.players[ 2 ] = new Player( 2, "waffle" );
+	game.players[ 2 ].x = 30;
+	game.players[ 2 ].y = 30;
 
 	ws.onopen = ws_open;
 	ws.onclose = ws_close;
