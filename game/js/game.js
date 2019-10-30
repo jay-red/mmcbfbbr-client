@@ -1,3 +1,14 @@
+function Game() {
+		this.canvas = null;
+		this.ctx = null;
+		this.players = {};
+		this.countdown = 5;
+		this.interval = null;
+		this.started = false;
+		this.boss = -1;
+		this.healthUpdate = false;
+	}
+
 var OP_JOIN = 0x00;
 	OP_GAME = 0x01;
 	OP_START = 0x02;
@@ -23,7 +34,8 @@ var OP_JOIN = 0x00;
 	PLAYER_BASEDMG = 20,
 	AIRDRAG = 0.001,
 	ACCEL_MULT = 50,
-	ACCEL_SLOW = .000001;
+	ACCEL_SLOW = .000001,
+	debugGame = new Game();
 
 function mmcbfbbr() {
 	var img_name = "",
@@ -35,7 +47,8 @@ function mmcbfbbr() {
 		errored = 0,
 		knights_ready = false,
 		waffle_ready = false,
-		beach_ready = false;
+		beach_ready = false,
+		game = window.debugGame;
 
 	function knight_load() {
 		loaded += 1;
@@ -114,19 +127,7 @@ function mmcbfbbr() {
 		this.lastAttacked = -1;
 	}
 
-	function Game() {
-		this.canvas = null;
-		this.ctx = null;
-		this.players = {};
-		this.countdown = 5;
-		this.interval = null;
-		this.started = false;
-		this.boss = -1;
-		this.healthUpdate = false;
-	}
-
 	var ws = new WebSocket( "wss://mmcbfbbr.herokuapp.com" ),
-		game = new Game(),
 		cols = document.getElementById( "cols" ),
 		lists = [ document.getElementById( "list-one" ), document.getElementById( "list-two" ), document.getElementById( "list-three" ) ],
 		startscreen = document.getElementById( "startscreen" ),
@@ -417,7 +418,7 @@ function mmcbfbbr() {
 										player.attack( player2 );
 									}
 								}
-								if( player2.spotlight ) {
+								if( player2.spotlight && player2.alive ) {
 									x = player.x + PLAYER_HITBOX[ j ][ 0 ];
 									y = player.y + PLAYER_HITBOX[ j ][ 1 ];
 									if( x >= player2.sx + SPOTLIGHT_HITBOX[ 0 ][ 0 ] && x <= player2.sx + SPOTLIGHT_HITBOX[ 2 ][ 0 ] 
