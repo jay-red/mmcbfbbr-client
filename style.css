@@ -1,3 +1,7 @@
+#screenIcon {
+	display: none;
+}
+
 @media only screen and (orientation:landscape){
 	#portrait {
 		display: none;
